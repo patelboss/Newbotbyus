@@ -53,7 +53,7 @@ async def run(client: Client, message):
             if re.match(r".*https://t.me/.*", channel, flags=re.IGNORECASE):
                 break
             else:
-                await chat.reply_text("Invalid URL, please send a valid Telegram link.", parse_mode=ParseMode.HTML)
+                await chat.reply_text("Wrong URL, please send a valid invite link.", parse_mode=ParseMode.HTML)
         except TimeoutError:
             await client.send_message(
                 message.from_user.id,
@@ -62,49 +62,45 @@ async def run(client: Client, message):
             )
             return
 
-    # Step 2: Validate the channel link and determine its type
+    # Step 2: Handle channel type (private/public)
     global channel_type, channel_id_
-    try:
-        # Try to resolve it as a public channel
-        chat = await client.get_chat(channel)
-        channel_type = "public"
-        channel_id_ = chat.username or chat.id
-    except PeerIdInvalid:
-        # If public resolution fails, try joining as a private link
+    if 'joinchat' in channel:
+        channel_type = "private"
         try:
             await client.join_chat(channel)
-            channel_type = "private"
-            # Ask for the Channel ID in case of private channels
-            while True:
-                try:
-                    id_chat = await client.ask(
-                        chat_id=message.from_user.id,
-                        text="Since this is a Private channel, send me the Channel ID.",
-                        timeout=30,
-                        parse_mode=ParseMode.HTML
-                    )
-                    channel_id_ = id_chat.text.strip()
-                    if channel_id_.startswith("-100"):
-                        channel_id_ = int(channel_id_)
-                        break
-                    else:
-                        await id_chat.reply_text("Invalid Channel ID. It should start with '-100'.", parse_mode=ParseMode.HTML)
-                except TimeoutError:
-                    await client.send_message(
-                        message.from_user.id,
-                        "Error!!\n\nRequest timed out.\nRestart by using /index",
-                        parse_mode=ParseMode.HTML
-                    )
-                    return
+        except UserAlreadyParticipant:
+            logger.info("Already a participant in the channel.")
         except InviteHashExpired:
             await message.reply_text("Invalid or expired invite link.", parse_mode=ParseMode.HTML)
             return
-        except UserAlreadyParticipant:
-            logger.info("Already a participant in the private channel.")
-        except Exception as e:
-            logger.error(f"Error joining private channel: {e}")
-            await message.reply_text("An unexpected error occurred while validating the link.", parse_mode=ParseMode.HTML)
-            return
+
+        # Ask for Channel ID
+        while True:
+            try:
+                id_chat = await client.ask(
+                    chat_id=message.from_user.id,
+                    text="Since this is a Private channel, send me the Channel ID.",
+                    timeout=30,
+                    parse_mode=ParseMode.HTML
+                )
+                channel_id_ = id_chat.text.strip()
+                if channel_id_.startswith("-100"):
+                    channel_id_ = int(channel_id_)
+                    break
+                else:
+                    await id_chat.reply_text("Invalid Channel ID. It should start with '-100'.", parse_mode=ParseMode.HTML)
+            except TimeoutError:
+                await client.send_message(
+                    message.from_user.id,
+                    "Error!!\n\nRequest timed out.\nRestart by using /index",
+                    parse_mode=ParseMode.HTML
+                )
+                return
+    else:
+        channel_type = "public"
+        match = re.search(r"t.me/(.*)", channel)
+        if match:
+            channel_id_ = match.group(1)
 
     # Step 3: Ask for skip and limit values
     while True:
@@ -157,6 +153,7 @@ async def run(client: Client, message):
         reply_markup=buttons,
         parse_mode=ParseMode.HTML
     )
+
 
 
 
