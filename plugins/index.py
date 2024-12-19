@@ -34,7 +34,7 @@ channel_id_ = ""
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(client: Client, message):
     logger.info(f"User {message.from_user.id} initiated the /index command.")
-
+    
     if message.from_user.id != OWNER:
         await message.reply_text("Who the hell are you!!", parse_mode=ParseMode.HTML)
         logger.warning(f"Unauthorized access attempt by {message.from_user.id}.")
@@ -50,12 +50,10 @@ async def run(client: Client, message):
                 parse_mode=ParseMode.HTML
             )
             channel = chat.text.strip()
-            
-            # Validate the link
-            if re.match(r"^https://t\.me/(joinchat/|c/|[\w\d_]+)$", channel, flags=re.IGNORECASE):
+            if channel.startswith("https://t.me/"):
                 break
             else:
-                await chat.reply_text("Invalid URL. Please send a valid Telegram channel invite link.", parse_mode=ParseMode.HTML)
+                await chat.reply_text("Invalid URL, please send a valid Telegram link.", parse_mode=ParseMode.HTML)
         except TimeoutError:
             await client.send_message(
                 message.from_user.id,
@@ -64,56 +62,49 @@ async def run(client: Client, message):
             )
             return
 
-    # Step 2: Handle channel type (private/public)
+    # Step 2: Validate the channel link and determine its type
     global channel_type, channel_id_
     try:
-        if 'joinchat' in channel or channel.startswith("https://t.me/c/"):
-            channel_type = "private"
-            await client.join_chat(channel)
-            logger.info(f"Joined the private channel using invite link: {channel}")
-        else:
-            channel_type = "public"
-            channel_id_ = await client.get_chat(channel)
-            logger.info(f"Verified public channel: {channel}")
-    except InviteHashExpired:
-        await message.reply_text("The invite link is invalid or expired.", parse_mode=ParseMode.HTML)
-        logger.error(f"Invalid or expired invite link: {channel}")
-        return
-    except UserAlreadyParticipant:
-        logger.info("Already a participant in the channel.")
-        await message.reply_text("I'm already a participant in this channel.", parse_mode=ParseMode.HTML)
+        # Try to resolve it as a public channel
+        chat = await client.get_chat(channel)
+        channel_type = "public"
+        channel_id_ = chat.username or chat.id
     except PeerIdInvalid:
-        await message.reply_text("Invalid channel link. Please check and try again.", parse_mode=ParseMode.HTML)
-        logger.error(f"Invalid channel link: {channel}")
-        return
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        await message.reply_text("An error occurred while processing your request.", parse_mode=ParseMode.HTML)
-        return
-
-    # Ask for Channel ID if private
-    if channel_type == "private":
-        while True:
-            try:
-                id_chat = await client.ask(
-                    chat_id=message.from_user.id,
-                    text="Since this is a Private channel, send me the Channel ID.",
-                    timeout=30,
-                    parse_mode=ParseMode.HTML
-                )
-                channel_id_ = id_chat.text.strip()
-                if channel_id_.startswith("-100"):
-                    channel_id_ = int(channel_id_)
-                    break
-                else:
-                    await id_chat.reply_text("Invalid Channel ID. It should start with '-100'.", parse_mode=ParseMode.HTML)
-            except TimeoutError:
-                await client.send_message(
-                    message.from_user.id,
-                    "Error!!\n\nRequest timed out.\nRestart by using /index",
-                    parse_mode=ParseMode.HTML
-                )
-                return
+        # If public resolution fails, try joining as a private link
+        try:
+            await client.join_chat(channel)
+            channel_type = "private"
+            # Ask for the Channel ID in case of private channels
+            while True:
+                try:
+                    id_chat = await client.ask(
+                        chat_id=message.from_user.id,
+                        text="Since this is a Private channel, send me the Channel ID.",
+                        timeout=30,
+                        parse_mode=ParseMode.HTML
+                    )
+                    channel_id_ = id_chat.text.strip()
+                    if channel_id_.startswith("-100"):
+                        channel_id_ = int(channel_id_)
+                        break
+                    else:
+                        await id_chat.reply_text("Invalid Channel ID. It should start with '-100'.", parse_mode=ParseMode.HTML)
+                except TimeoutError:
+                    await client.send_message(
+                        message.from_user.id,
+                        "Error!!\n\nRequest timed out.\nRestart by using /index",
+                        parse_mode=ParseMode.HTML
+                    )
+                    return
+        except InviteHashExpired:
+            await message.reply_text("Invalid or expired invite link.", parse_mode=ParseMode.HTML)
+            return
+        except UserAlreadyParticipant:
+            logger.info("Already a participant in the private channel.")
+        except Exception as e:
+            logger.error(f"Error joining private channel: {e}")
+            await message.reply_text("An unexpected error occurred while validating the link.", parse_mode=ParseMode.HTML)
+            return
 
     # Step 3: Ask for skip and limit values
     while True:
@@ -166,7 +157,6 @@ async def run(client: Client, message):
         reply_markup=buttons,
         parse_mode=ParseMode.HTML
     )
-
 
 
 
