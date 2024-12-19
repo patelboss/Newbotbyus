@@ -32,141 +32,110 @@ channel_id_ = ""
 
 # Command: /index
 @Client.on_message(filters.private & filters.command(["index"]))
-async def run(client: Client, message):
-    logger.info(f"User {message.from_user.id} initiated the /index command.")
-    
+async def run(bot, message):
     if message.from_user.id != OWNER:
-        await message.reply_text("Who the hell are you!!", parse_mode=ParseMode.HTML)
-        logger.warning(f"Unauthorized access attempt by {message.from_user.id}.")
+        await message.reply_text("Who the hell are you!!")
         return
-
-    # Step 1: Ask for the channel link
     while True:
         try:
-            chat = await client.ask(
-                chat_id=message.from_user.id,
-                text="To index a channel, send me the channel invite link.",
-                timeout=30,
-                parse_mode=ParseMode.HTML
-            )
-            channel = chat.text.strip()
-            if re.match(r".*https://t.me/.*", channel, flags=re.IGNORECASE):
-                break
-            else:
-                await chat.reply_text("Wrong URL, please send a valid invite link.", parse_mode=ParseMode.HTML)
+            chat = await bot.ask(text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            channel=chat.text
         except TimeoutError:
-            await client.send_message(
-                message.from_user.id,
-                "Error!!\n\nRequest timed out.\nRestart by using /index",
-                parse_mode=ParseMode.HTML
-            )
-                    
-        except Exception as e :
-            await chat.reply_text(f' Error {e}')
+            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
             return
-            
-    
 
-    # Step 2: Handle channel type (private/public)
-    #global channel_type, channel_id_
+        pattern=".*https://t.me/.*"
+        result = re.match(pattern, channel, flags=re.IGNORECASE)
+        if result:
+            print(channel)
+            break
+        else:
+            await chat.reply_text("Wrong URL")
+            continue
+
     if 'joinchat' in channel:
-        channel_type = "private"
+        global channel_type
+        channel_type="private"
         try:
-            await client.USER.join_chat(channel)
+            await bot.USER.join_chat(channel)
         except UserAlreadyParticipant:
-            logger.info("Already a participant in the channel.")
+            pass
         except InviteHashExpired:
-            await message.reply_text("Invalid or expired invite link.", parse_mode=ParseMode.HTML)
-
-        except Exception as e :
-            await chat.reply_text(f' Error {e}')
+            await chat.reply_text("Wrong URL or User Banned in channel.")
             return
-
-        # Ask for Channel ID
         while True:
             try:
-                id_chat = await client.ask(
-                    chat_id=message.from_user.id,
-                    text="Since this is a Private channel, send me the Channel ID.",
-                    timeout=30,
-                    parse_mode=ParseMode.HTML
-                )
-                channel_id_ = id_chat.text.strip()
-                if channel_id_.startswith("-100"):
-                    global channel_id_
-                    channel_id_ = int(channel_id_)
-                    break
-                else:
-                    await id_chat.reply_text("Invalid Channel ID. It should start with '-100'.", parse_mode=ParseMode.HTML)
+                id = await bot.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+                channel=id.text
             except TimeoutError:
-                await client.send_message(
-                    message.from_user.id,
-                    "Error!!\n\nRequest timed out.\nRestart by using /index",
-                    parse_mode=ParseMode.HTML
-                )
-            except Exception as e :
-                await chat.reply_text(f' Error {e}')
+                await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
                 return
-            
+            channel=id.text
+            if channel.startswith("-100"):
+                global channel_id_
+                channel_id_=int(channel)
+                break
+            else:
+                await chat.reply_text("Wrong Channel ID")
+                continue
+
             
     else:
-        channel_type = "public"
-        match = re.search(r"t.me/(.*)", channel)
-        if match:
-            channel_id_ = match.group(1)
-
-    # Step 3: Ask for skip and limit values
-    while True:
-        try:
-            skip_chat = await client.ask(
-                chat_id=message.from_user.id,
-                text="Send me the start point (0 for beginning):",
-                timeout=30,
-                parse_mode=ParseMode.HTML
-            )
-            skip_no = int(skip_chat.text.strip())
-            break
-        except (TimeoutError, ValueError):
-            await client.send_message(
-                message.from_user.id,
-                "Invalid input. Please send a valid number for skip.",
-                parse_mode=ParseMode.HTML
-            )
+        #global channel_type
+        channel_type="public"
+        channel_id = re.search(r"t.me.(.*)", channel)
+        #global channel_id_
+        channel_id_=channel_id.group(1)
 
     while True:
         try:
-            limit_chat = await client.ask(
-                chat_id=message.from_user.id,
-                text="Send me the limit (0 for all messages):",
-                timeout=30,
-                parse_mode=ParseMode.HTML
-            )
-            limit_no = int(limit_chat.text.strip())
+            SKIP = await bot.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            print(SKIP.text)
+        except TimeoutError:
+            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            return
+        try:
+            global skip_no
+            skip_no=int(SKIP.text)
             break
-        except (TimeoutError, ValueError):
-            await client.send_message(
-                message.from_user.id,
-                "Invalid input. Please send a valid number for limit.",
-                parse_mode=ParseMode.HTML
-            )
+        except:
+            await SKIP.reply_text("Thats an invalid ID, It should be an integer.")
+            continue
+    while True:
+        try:
+            LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            print(LIMIT.text)
+        except TimeoutError:
+            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            return
+        try:
+            global limit_no
+            limit_no=int(LIMIT.text)
+            break
+        except:
+            await LIMIT.reply_text("Thats an invalid ID, It should be an integer.")
+            continue
 
-    # Step 4: Message Type Filtering
-    buttons = InlineKeyboardMarkup(
+    buttons=InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("All Messages", callback_data="all")],
-            [InlineKeyboardButton("Document", callback_data="docs"),
-             InlineKeyboardButton("Photos", callback_data="photos")],
-            [InlineKeyboardButton("Videos", callback_data="videos"),
-             InlineKeyboardButton("Audios", callback_data="audio")]
+            [
+                InlineKeyboardButton("All Messages", callback_data="all")
+            ],
+            [
+                InlineKeyboardButton("Document", callback_data="docs"),
+                InlineKeyboardButton("Photos", callback_data="photos")
+            ],
+            [
+                InlineKeyboardButton("Videos", callback_data="videos"),
+                InlineKeyboardButton("Audios", callback_data="audio")
+            ]
         ]
-    )
-    await client.send_message(
+        )
+    await bot.send_message(
         chat_id=message.from_user.id,
-        text="Choose the type of messages to forward.",
-        reply_markup=buttons,
-        parse_mode=ParseMode.HTML
-    )
-
+        text=f"Ok,\nNow choose what type of messages you want to forward.",
+        reply_markup=buttons
+        )
 
 
 
