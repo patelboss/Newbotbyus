@@ -3,7 +3,7 @@ from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import FloodWait
-from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
+#from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
 from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
 import re
 from bot import Bot  # Import the bot instance correctly
@@ -15,6 +15,9 @@ from pyrogram.types import CallbackQuery, Message
 from pyrogram.enums import MessagesFilter
 from pyrogram import enums
 # Logging setup
+import re
+from pyrogram.errors import InviteHashExpired, UserAlreadyParticipant, PeerIdInvalid
+
 logging.basicConfig(
     format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
     level=logging.INFO
@@ -34,7 +37,7 @@ channel_id_ = ""
 @Client.on_message(filters.private & filters.command(["index"]))
 async def run(client: Client, message):
     logger.info(f"User {message.from_user.id} initiated the /index command.")
-    
+
     if message.from_user.id != OWNER:
         await message.reply_text("Who the hell are you!!", parse_mode=ParseMode.HTML)
         logger.warning(f"Unauthorized access attempt by {message.from_user.id}.")
@@ -50,10 +53,12 @@ async def run(client: Client, message):
                 parse_mode=ParseMode.HTML
             )
             channel = chat.text.strip()
-            if re.match(r".*https://t.me/.*", channel, flags=re.IGNORECASE):
+            
+            # Validate the link
+            if re.match(r"^https://t\.me/(joinchat/|c/|[\w\d_]+)$", channel, flags=re.IGNORECASE):
                 break
             else:
-                await chat.reply_text("Wrong URL, please send a valid invite link.", parse_mode=ParseMode.HTML)
+                await chat.reply_text("Invalid URL. Please send a valid Telegram channel invite link.", parse_mode=ParseMode.HTML)
         except TimeoutError:
             await client.send_message(
                 message.from_user.id,
@@ -64,16 +69,37 @@ async def run(client: Client, message):
 
     # Step 2: Handle channel type (private/public)
     global channel_type, channel_id_
-    if 'joinchat' in channel:
-        channel_type = "private"
-        try:
-            await client.join_chat(channel)
-        except UserAlreadyParticipant:
-            logger.info("Already a participant in the channel.")
-        except InviteHashExpired:
-            await message.reply_text("Invalid or expired invite link.", parse_mode=ParseMode.HTML)
-            return
+    try:
+        if 'joinchat' in channel or channel.startswith("https://t.me/c/"):
+            # Likely a private channel
+            channel_type = "private"
+            await client.join_chat(channel)  # Attempt to join the channel
+            logger.info(f"Joined the private channel using invite link: {channel}")
 
+        else:
+            # Likely a public channel
+            channel_type = "public"
+            channel_id_ = await client.get_chat(channel)  # Verify and fetch the chat details
+            logger.info(f"Verified public channel: {channel}")
+        
+    #    await message.reply_text(f"Channel successfully indexed!\nType: {channel_type}", parse_mode=ParseMode.HTML)
+
+    except InviteHashExpired:
+        await message.reply_text("The invite link is invalid or expired.", parse_mode=ParseMode.HTML)
+        logger.error(f"Invalid or expired invite link: {channel}")
+        return
+    except UserAlreadyParticipant:
+        logger.info("Already a participant in the channel.")
+        await message.reply_text("I'm already a participant in this channel.", parse_mode=ParseMode.HTML)
+    except PeerIdInvalid:
+        await message.reply_text("Invalid channel link. Please check and try again.", parse_mode=ParseMode.HTML)
+        logger.error(f"Invalid channel link: {channel}")
+        return
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        await message.reply_text("An error occurred while processing your request.", parse_mode=ParseMode.HTML)
+        return
+               
         # Ask for Channel ID
         while True:
             try:
