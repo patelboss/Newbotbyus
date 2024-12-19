@@ -32,17 +32,22 @@ channel_id_ = ""
 
 # Command: /index
 @Client.on_message(filters.private & filters.command(["index"]))
-async def run(bot, message):
+async def run(client: Client, message):
     if message.from_user.id != OWNER:
         await message.reply_text("Who the hell are you!!")
         return
     while True:
         try:
-            chat = await bot.ask(text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            chat = await client.ask(text = "To Index a channel you may send me the channel invite link, so that I can join channel and index the files.\n\nIt should be something like <code>https://t.me/xxxxxx</code> or <code>https://t.me/joinchat/xxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
             channel=chat.text
         except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            await client.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
             return
+            
+        except Exception as e:
+            
+            await message.reply_texf(f'error {e}')
+        
 
         pattern=".*https://t.me/.*"
         result = re.match(pattern, channel, flags=re.IGNORECASE)
@@ -57,18 +62,21 @@ async def run(bot, message):
         global channel_type
         channel_type="private"
         try:
-            await bot.USER.join_chat(channel)
+            await client.USER.join_chat(channel)
         except UserAlreadyParticipant:
             pass
         except InviteHashExpired:
             await chat.reply_text("Wrong URL or User Banned in channel.")
             return
+        
+        except Exception as e:
+            await message.reply_texf(f'error {e}')
         while True:
             try:
-                id = await bot.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+                id = await client.ask(text = "Since this is a Private channel I need Channel id, Please send me channel ID\n\nIt should be something like <code>-100xxxxxxxxx</code>", chat_id = message.from_user.id, filters=filters.text, timeout=30)
                 channel=id.text
             except TimeoutError:
-                await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+                await client.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
                 return
             channel=id.text
             if channel.startswith("-100"):
@@ -89,10 +97,10 @@ async def run(bot, message):
 
     while True:
         try:
-            SKIP = await bot.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            SKIP = await client.ask(text = "Send me from where you want to start forwarding\nSend 0 for from beginning.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
             print(SKIP.text)
         except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            await client.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
             return
         try:
             global skip_no
@@ -103,10 +111,10 @@ async def run(bot, message):
             continue
     while True:
         try:
-            LIMIT = await bot.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
+            LIMIT = await client.ask(text = "Send me from Upto what extend(LIMIT) do you want to Index\nSend 0 for all messages.", chat_id = message.from_user.id, filters=filters.text, timeout=30)
             print(LIMIT.text)
         except TimeoutError:
-            await bot.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
+            await client.send_message(message.from_user.id, "Error!!\n\nRequest timed out.\nRestart by using /index")
             return
         try:
             global limit_no
@@ -131,7 +139,7 @@ async def run(bot, message):
             ]
         ]
         )
-    await bot.send_message(
+    await client.send_message(
         chat_id=message.from_user.id,
         text=f"Ok,\nNow choose what type of messages you want to forward.",
         reply_markup=buttons
@@ -194,9 +202,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
     # Initialize counters and parameters
     msg_count = 0
     mcount = 0
+
+    channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
+    
     FROM = channel_id_
 
     # Validate skip_no and limit_no
+    skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     limit_no = int(limit_no) if limit_no and str(limit_no).isdigit() else 100
 
