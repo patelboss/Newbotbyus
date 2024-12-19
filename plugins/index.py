@@ -67,7 +67,7 @@ async def run(client: Client, message):
     if 'joinchat' in channel:
         channel_type = "private"
         try:
-            await client.join_chat(channel)
+            await client.USER.join_chat(channel)
         except UserAlreadyParticipant:
             logger.info("Already a participant in the channel.")
         except InviteHashExpired:
