@@ -1,0 +1,18 @@
+dnspython>=2.3.0    # Compatible with pymongo[srv]
+#umongo==2.3.0
+#motor==3.1.1        # Latest compatible version
+pytz
+flask==2.3.3
+pymongo[srv]==3.12.3  # Ensure it's compatible with motor and dnspython
+python-dotenv==0.*
+SQLAlchemy==1.4.*
+psycopg2==2.*
+TgCrypto==1.*
+pyrogram==2.*
+pyromod==1.5
+#pymongo>=4.1,<5
+#umongo==2.3.0
+#motor==3.1.1
+pymongo==3.12.3
+motor==2.5.1   # This is the last version compatible with pymongo 3.x
+umongo==2.3.0
