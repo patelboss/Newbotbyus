@@ -25,19 +25,6 @@ async def count(bot, m):
     else:
         await m.reply_text("Bot is Idle now, You can start a task.", parse_mode=ParseMode.HTML)
 
-@Client.on_message(filters.command('totalf'))
-async def totalf(bot, message):
-    msg = await message.reply("Counting total messages in DB...", quote=True, parse_mode=ParseMode.HTML)
-    try:
-        # Use Motor's count_documents method on the collection
-        total = await db[COLLECTION_NAME].count_documents({})  # Counts all documents in the collection
-
-        if total is None:
-            await msg.edit(f"Error: Couldn't fetch total messages.", parse_mode=ParseMode.HTML)
-        else:
-            await msg.edit(f'Total Messages: {total}', parse_mode=ParseMode.HTML)
-    except Exception as e:
-        await msg.edit(f'Error: {e}', parse_mode=ParseMode.HTML)
 @Client.on_message(filters.command('totala'))
 async def totala(bot, message):
     msg = await message.reply("Counting total messages in DB...", quote=True)
@@ -66,7 +53,7 @@ async def totalb(bot, message):
             await msg.edit("Error: Database is not initialized.")
     except Exception as e:
         await msg.edit(f'Error: {e}')
-@Client.on_message(filters.command('totald'))
+@Client.on_message(filters.command('total'))
 async def totald(bot, message):
     msg = await message.reply("Counting total messages in DB...", quote=True)
     try:
@@ -75,19 +62,6 @@ async def totald(bot, message):
     except Exception as e:
         await msg.edit(f'Error: {e}')
         
-@Client.on_message(filters.command('total'))
-async def total(bot, message):
-    msg = await message.reply("Counting total messages in DB...", quote=True, parse_mode=ParseMode.HTML)
-    try:
-        # Fetch total count using the umongo model
-        total = await Data.count()  # Use the async count method from umongo
-        
-        if total is None:
-            await msg.edit(f"Error: Couldn't fetch total messages.", parse_mode=ParseMode.HTML)
-        else:
-            await msg.edit(f'Total Messages: {total}', parse_mode=ParseMode.HTML)
-    except Exception as e:
-        await msg.edit(f'Error: {e}', parse_mode=ParseMode.HTML)
 
 
 @Client.on_message(filters.command('cleardb'))
