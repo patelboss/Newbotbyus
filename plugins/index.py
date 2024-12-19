@@ -60,7 +60,12 @@ async def run(client: Client, message):
                 "Error!!\n\nRequest timed out.\nRestart by using /index",
                 parse_mode=ParseMode.HTML
             )
+                    
+        except Exception as e :
+            await chat.reply_text(f' Error {e}')
             return
+            
+    
 
     # Step 2: Handle channel type (private/public)
     global channel_type, channel_id_
@@ -72,7 +77,11 @@ async def run(client: Client, message):
             logger.info("Already a participant in the channel.")
         except InviteHashExpired:
             await message.reply_text("Invalid or expired invite link.", parse_mode=ParseMode.HTML)
+
+        except Exception as e :
+            await chat.reply_text(f' Error {e}')
             return
+        
 
         # Ask for Channel ID
         while True:
@@ -95,7 +104,11 @@ async def run(client: Client, message):
                     "Error!!\n\nRequest timed out.\nRestart by using /index",
                     parse_mode=ParseMode.HTML
                 )
-                return
+            except Exception as e :
+            await chat.reply_text(f' Error {e}')
+            return
+            
+            
     else:
         channel_type = "public"
         match = re.search(r"t.me/(.*)", channel)
