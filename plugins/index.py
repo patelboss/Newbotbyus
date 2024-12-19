@@ -208,7 +208,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     FROM = channel_id_
 
     # Validate skip_no and limit_no
-    skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
+    #skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     limit_no = int(limit_no) if limit_no and str(limit_no).isdigit() else 100
 
