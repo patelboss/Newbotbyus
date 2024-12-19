@@ -68,7 +68,7 @@ async def run(client: Client, message):
     
 
     # Step 2: Handle channel type (private/public)
-    global channel_type, channel_id_
+    #global channel_type, channel_id_
     if 'joinchat' in channel:
         channel_type = "private"
         try:
@@ -81,7 +81,6 @@ async def run(client: Client, message):
         except Exception as e :
             await chat.reply_text(f' Error {e}')
             return
-        
 
         # Ask for Channel ID
         while True:
@@ -94,6 +93,7 @@ async def run(client: Client, message):
                 )
                 channel_id_ = id_chat.text.strip()
                 if channel_id_.startswith("-100"):
+                    global channel_id_
                     channel_id_ = int(channel_id_)
                     break
                 else:
