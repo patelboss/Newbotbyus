@@ -134,7 +134,7 @@ async def forward(bot, message):
                     except:
                         pass
                 except FloodWait as e:
-                    await asyncio.sleep(e.x)
+                    await asyncio.sleep(e.value)
                     if file_type in ("document", "video", "audio", "photo"):
                         await bot.send_cached_media(
                             chat_id=chat_id,
