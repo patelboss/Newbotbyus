@@ -3,9 +3,7 @@ from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram.errors import FloodWait
-#from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
 from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
-import re
 from bot import Bot  # Import the bot instance correctly
 from asyncio.exceptions import TimeoutError
 from database import save_data, get_search_results  # Ensure database functions are correct
@@ -13,11 +11,10 @@ import logging
 from pyrogram.enums import ParseMode
 from pyrogram.types import CallbackQuery, Message
 from pyrogram.enums import MessagesFilter
-from pyrogram import enums
-# Logging setup
-import re
 from pyrogram.errors import InviteHashExpired, UserAlreadyParticipant, PeerIdInvalid
+import re
 
+# Logging setup
 logging.basicConfig(
     format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
     level=logging.INFO
@@ -71,19 +68,13 @@ async def run(client: Client, message):
     global channel_type, channel_id_
     try:
         if 'joinchat' in channel or channel.startswith("https://t.me/c/"):
-            # Likely a private channel
             channel_type = "private"
-            await client.join_chat(channel)  # Attempt to join the channel
+            await client.join_chat(channel)
             logger.info(f"Joined the private channel using invite link: {channel}")
-
         else:
-            # Likely a public channel
             channel_type = "public"
-            channel_id_ = await client.get_chat(channel)  # Verify and fetch the chat details
+            channel_id_ = await client.get_chat(channel)
             logger.info(f"Verified public channel: {channel}")
-        
-    #    await message.reply_text(f"Channel successfully indexed!\nType: {channel_type}", parse_mode=ParseMode.HTML)
-
     except InviteHashExpired:
         await message.reply_text("The invite link is invalid or expired.", parse_mode=ParseMode.HTML)
         logger.error(f"Invalid or expired invite link: {channel}")
@@ -99,8 +90,9 @@ async def run(client: Client, message):
         logger.error(f"Unexpected error: {e}")
         await message.reply_text("An error occurred while processing your request.", parse_mode=ParseMode.HTML)
         return
-               
-        # Ask for Channel ID
+
+    # Ask for Channel ID if private
+    if channel_type == "private":
         while True:
             try:
                 id_chat = await client.ask(
@@ -122,11 +114,6 @@ async def run(client: Client, message):
                     parse_mode=ParseMode.HTML
                 )
                 return
-    else:
-        channel_type = "public"
-        match = re.search(r"t.me/(.*)", channel)
-        if match:
-            channel_id_ = match.group(1)
 
     # Step 3: Ask for skip and limit values
     while True:
@@ -179,6 +166,7 @@ async def run(client: Client, message):
         reply_markup=buttons,
         parse_mode=ParseMode.HTML
     )
+
 
 
 
