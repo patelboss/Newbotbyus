@@ -50,7 +50,7 @@ async def run(client: Client, message):
                 parse_mode=ParseMode.HTML
             )
             channel = chat.text.strip()
-            if channel.startswith("https://t.me/"):
+            if re.match(r".*https://t.me/.*", channel, flags=re.IGNORECASE):
                 break
             else:
                 await chat.reply_text("Invalid URL, please send a valid Telegram link.", parse_mode=ParseMode.HTML)
