@@ -105,8 +105,8 @@ async def run(client: Client, message):
                     parse_mode=ParseMode.HTML
                 )
             except Exception as e :
-            await chat.reply_text(f' Error {e}')
-            return
+                await chat.reply_text(f' Error {e}')
+                return
             
             
     else:
