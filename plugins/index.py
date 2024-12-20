@@ -81,7 +81,9 @@ async def run(client: Client, message):
             channel=id.text
             if channel.startswith("-100"):
                 global channel_id_
-                channel_id_=int(channel)
+                channel_id_ = channel
+                
+                #channel_id_=int(channel)
                 break
             else:
                 await chat.reply_text("Wrong Channel ID")
