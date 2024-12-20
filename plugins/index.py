@@ -205,7 +205,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     msg_count = 0
     mcount = 0
 
-    channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
+    #channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
     
     FROM = channel_id_
 
