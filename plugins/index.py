@@ -207,18 +207,18 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     #channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
     
-    FROM = channel_id_
+    #FROM = channel_id_
 
     # Validate skip_no and limit_no
     #skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     limit_no = int(limit_no) if limit_no and str(limit_no).isdigit() else 100
-    print(f"Channel id : {From}, skip number: {skip_no}, limit number: {limit_no}, Filter: {filter}")
+    print(f"Channel id : {channel_id_}, skip number: {skip_no}, limit number: {limit_no}, Filter: {filter}")
           
 
     try:
         # Iterate through messages in the channel
-        async for msg in client.USER.search_messages(chat_id=FROM, offset=skip_no, limit=limit_no, filter=filter):
+        async for msg in client.USER.search_messages(chat_id=channel_id_, offset=skip_no, limit=limit_no, filter=filter):
             logger.debug(f"Processing message ID: {msg.id}")
 
             channel_type = "public"  # or "private", based on your configuration
