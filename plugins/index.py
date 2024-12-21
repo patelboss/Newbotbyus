@@ -215,6 +215,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 fetched_msg = await client.USER.get_messages(FROM, msg.id)
 
             msg_caption = caption if caption is not None else fetched_msg.caption or ""
+            
+            file_type = "others"
+            id = f"{FROM}_{msg.id}"
 
             if filter in ("document", "video", "audio", "photo"):
                 for file_type in ("document", "video", "audio", "photo"):
