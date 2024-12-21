@@ -81,9 +81,9 @@ async def run(client: Client, message):
             channel=id.text
             if channel.startswith("-100"):
                 global channel_id_
-                channel_id_ = channel
+                #channel_id_ = channel
                 
-                #channel_id_=int(channel)
+                channel_id_=int(channel)
                 print(channel_id_)
                 break
             else:
@@ -207,7 +207,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     #channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
     
-    #FROM = channel_id_
+    FROM = channel_id_
 
     # Validate skip_no and limit_no
     #skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
@@ -217,60 +217,66 @@ async def cb_handler(client: Client, query: CallbackQuery):
           
 
     try:
+        
         # Iterate through messages in the channel
-        async for msg in client.USER.search_messages(chat_id=channel_id_, offset=skip_no, limit=limit_no, filter=filter):
-            logger.debug(f"Processing message ID: {msg.id}")
-
-            channel_type = "public"  # or "private", based on your configuration
-            methord = "bot" if channel_type == "public" else "user"
-            channel = FROM if channel_type == "public" else str(FROM)
-
-            # Prepare the caption
-            msg_caption = caption if caption else (msg.caption or "")
-            logger.debug(f"Message caption: {msg_caption}")
-
-            # Determine file type and ID
-            file_type = "others"
-            id = f"{FROM}_{msg.id}"
-            for f_type in ("document", "video", "audio", "photo"):
-                media = getattr(msg, f_type, None)
-                if media:
-                    id = media.file_id
-                    file_type = f_type
-                    break
-
-            # Save data to the database
+        async for MSG in bot.USER.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
+            if channel_type == "public":
+                methord="bot"
+                channel=FROM
+                msg=await bot.get_messages(FROM, MSG.message_id)
+            elif channel_type == "private":
+                methord="user"
+                channel=str(FROM)
+                msg=await bot.USER.get_messages(FROM, MSG.message_id)
+            msg_caption=""
+            if caption is not None:
+                msg_caption=caption
+            elif msg.caption:
+                msg_caption=msg.caption
+            if filter in ("document", "video", "audio", "photo"):
+                for file_type in ("document", "video", "audio", "photo"):
+                    media = getattr(msg, file_type, None)
+                    if media is not None:
+                        file_type = file_type
+                        id=media.file_id
+                        break
+            if filter == "empty":
+                for file_type in ("document", "video", "audio", "photo"):
+                    media = getattr(msg, file_type, None)
+                    if media is not None:
+                        file_type = file_type
+                        id=media.file_id
+                        break
+                else:
+                    id=f"{FROM}_{msg.message_id}"
+                    file_type="others"
+            
+            message_id=msg.message_id
             try:
-                await save_data(id, channel, msg.id, methord, msg_caption, file_type)
-                logger.info(f"Data saved for message ID: {msg.id}")
+                await save_data(id, channel, message_id, methord, msg_caption, file_type)
             except Exception as e:
-                logger.error(f"Error saving data for message ID {msg.id}: {e}")
-                await client.send_message(OWNER, f"LOG-Error-{e}")
-                continue
-
-            # Update counters
+                print(e)
+                await bot.send_message(OWNER, f"LOG-Error-{e}")
+                pass
             msg_count += 1
             mcount += 1
-            new_skip_no = str(skip_no + msg_count)
-            logger.debug(f"Total indexed: {msg_count}, Current SKIP_NO: {new_skip_no}")
-
-            # Update progress message every 100 messages
+            new_skip_no=str(skip_no+msg_count)
+            print(f"Total Indexed : {msg_count} - Current SKIP_NO: {new_skip_no}")
             if mcount == 100:
                 try:
                     datetime_ist = datetime.now(IST)
                     ISTIME = datetime_ist.strftime("%I:%M:%S %p - %d %B %Y")
-                    await m.edit(
-                        text=f"Total Indexed: <code>{msg_count}</code>\nCurrent skip_no: <code>{new_skip_no}</code>\nLast edited at {ISTIME}"
-                    )
-                    logger.info(f"Progress updated: Total indexed {msg_count}, Current SKIP_NO: {new_skip_no}")
-                    mcount = 0
+                    await m.edit(text=f"Total Indexed : <code>{msg_count}</code>\nCurrent skip_no:<code>{new_skip_no}</code>\nLast edited at {ISTIME}")
+                    mcount -= 100
                 except FloodWait as e:
-                    logger.warning(f"FloodWait encountered: {e.x} seconds.")
-                    await asyncio.sleep(e.x)
-
-        # Notify user upon completion
-        await m.edit(f"Successfully Indexed <code>{msg_count}</code> messages.")
-        logger.info(f"Indexing completed successfully for user {query.from_user.id}. Total messages indexed: {msg_count}.")
+                    print(f"Floodwait {e.x}")
+                    pass
+                except Exception as e:
+                    await bot.send_message(chat_id=OWNER, text=f"LOG-Error: {e}")
+                    print(e)
+                    pass
+        await m.edit(f"Succesfully Indexed <code>{msg_count}</code> messages.")
     except Exception as e:
-        logger.error(f"Error during indexing: {e}")
+        print(e)
         await m.edit(text=f"Error: {e}")
+        pass
