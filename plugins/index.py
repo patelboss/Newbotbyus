@@ -13,12 +13,17 @@ from pyrogram.types import CallbackQuery, Message
 from pyrogram.enums import MessagesFilter
 from pyrogram.errors import InviteHashExpired, UserAlreadyParticipant, PeerIdInvalid
 import re
-
+import logging
+import traceback
 
 # Logging setup
 logging.basicConfig(
-    format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log"),  # Save logs to a file
+        logging.StreamHandler()          # Output logs to the console
+    ]
 )
 logger = logging.getLogger(__name__)
 
