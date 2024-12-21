@@ -199,7 +199,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     mcount = 0
     FROM = channel_id_  # Replace with your channel ID
     try:
-        async for msg in client.USER.search_messages(chat_id=FROM, offset=skip_no, limit=limit_no, filter=file_filter):
+        async for msg in client.USER.search_messages(chat_id=FROM, offset=skip_no, limit=limit_no, filter=filter):
             if channel_type == "public":
                 method = "bot"
                 channel = FROM
@@ -211,14 +211,14 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
             msg_caption = caption if caption is not None else fetched_msg.caption or ""
 
-            if file_filter in ("document", "video", "audio", "photo"):
+            if filter in ("document", "video", "audio", "photo"):
                 for file_type in ("document", "video", "audio", "photo"):
                     media = getattr(fetched_msg, file_type, None)
                     if media is not None:
                         file_type = file_type
                         file_id = media.file_id
                         break
-            elif file_filter == "empty":
+            elif filter == "empty":
                 for file_type in ("document", "video", "audio", "photo"):
                     media = getattr(fetched_msg, file_type, None)
                     if media is not None:
