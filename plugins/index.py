@@ -14,6 +14,7 @@ from pyrogram.enums import MessagesFilter
 from pyrogram.errors import InviteHashExpired, UserAlreadyParticipant, PeerIdInvalid
 import re
 
+
 # Logging setup
 logging.basicConfig(
     format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
@@ -154,8 +155,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     global skip_no, limit_no  # Ensure these are accessible
 
     logger.info(f"Callback query received from user {query.from_user.id}. Data: {query.data}")
-
-    # Determine the filter type
+    
     filter = None
     if query.data == "docs":
         filter = MessagesFilter.DOCUMENT
@@ -168,115 +168,96 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data == "audio":
         filter = MessagesFilter.AUDIO
 
-    logger.info(f"Filter set to: {filter}")
     caption = None
-
-    # Delete the original message
     await query.message.delete()
 
-    # Ask for a custom caption
-    try:
-        get_caption = await client.ask(
-            chat_id=query.from_user.id,
-            text=f"Do you need a custom caption?\n\nIf yes, send me the caption.\n\nIf no, send '0'.",
-            parse_mode=ParseMode.HTML,
-            timeout=30
-            
-        )
-        input = get_caption.text
-        caption = None if input == "0" else input
-        logger.info(f"Caption set to: {caption}")
-    except TimeoutError:
-        logger.error(f"Timeout error while waiting for caption input from user {query.from_user.id}.")
-        await client.send_message(
-            chat_id=query.from_user.id,
-            text="Error!!\n\nRequest timed out.\nRestart by using /index"
-        )
-        return
+    while True:
+        try:
+            get_caption = await client.ask(
+                chat_id=query.from_user.id,
+                text="Do you need a custom caption?\n\nIf yes, send me the caption.\n\nIf no, send '0'.",
+                filters=filters.text,
+                timeout=30
+            )
+        except TimeoutError:
+            await client.send_message(query.from_user.id, "Error!\n\nRequest timed out.\nRestart by using /index.")
+            return
 
-    # Notify user that indexing has started
+        input_text = get_caption.text
+        if input_text == "0":
+            caption = None
+        else:
+            caption = input_text
+        break
+
     m = await client.send_message(
         chat_id=query.from_user.id,
         text="Indexing Started"
     )
-    logger.info(f"Indexing process initiated for user {query.from_user.id}.")
 
-    # Initialize counters and parameters
     msg_count = 0
     mcount = 0
-
-    #channel_id_ = int(channel_id_) if channel_id_ and str(channel_id_).isdigit() else 0
-    
-    FROM = channel_id_
-
-    # Validate skip_no and limit_no
-    #skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
-    skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
-    limit_no = int(limit_no) if limit_no and str(limit_no).isdigit() else 100
-    print(f"Channel id : {channel_id_}, skip number: {skip_no}, limit number: {limit_no}, Filter: {filter}")
-          
-
+    FROM = channel_id_  # Replace with your channel ID
     try:
-        
-        # Iterate through messages in the channel
-        async for MSG in client.USER.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
+        async for msg in client.USER.search_messages(chat_id=FROM, offset=skip_no, limit=limit_no, filter=file_filter):
             if channel_type == "public":
-                methord="bot"
-                channel=FROM
-                msg=await client.get_messages(FROM, MSG.message_id)
+                method = "bot"
+                channel = FROM
+                fetched_msg = await client.get_messages(FROM, msg.id)
             elif channel_type == "private":
-                methord="user"
-                channel=str(FROM)
-                msg=await client.USER.get_messages(FROM, MSG.message_id)
-            msg_caption=""
-            if caption is not None:
-                msg_caption=caption
-            elif msg.caption:
-                msg_caption=msg.caption
-            if filter in ("document", "video", "audio", "photo"):
+                method = "user"
+                channel = str(FROM)
+                fetched_msg = await client.USER.get_messages(FROM, msg.id)
+
+            msg_caption = caption if caption is not None else fetched_msg.caption or ""
+
+            if file_filter in ("document", "video", "audio", "photo"):
                 for file_type in ("document", "video", "audio", "photo"):
-                    media = getattr(msg, file_type, None)
+                    media = getattr(fetched_msg, file_type, None)
                     if media is not None:
                         file_type = file_type
-                        id=media.file_id
+                        file_id = media.file_id
                         break
-            if filter == "empty":
+            elif file_filter == "empty":
                 for file_type in ("document", "video", "audio", "photo"):
-                    media = getattr(msg, file_type, None)
+                    media = getattr(fetched_msg, file_type, None)
                     if media is not None:
                         file_type = file_type
-                        id=media.file_id
+                        file_id = media.file_id
                         break
                 else:
-                    id=f"{FROM}_{msg.message_id}"
-                    file_type="others"
-            
-            message_id=msg.message_id
+                    file_id = f"{FROM}_{fetched_msg.id}"
+                    file_type = "others"
+
+            message_id = fetched_msg.id
             try:
-                await save_data(id, channel, message_id, methord, msg_caption, file_type)
+                await save_data(file_id, channel, message_id, method, msg_caption, file_type)
             except Exception as e:
                 print(e)
                 await client.send_message(OWNER, f"LOG-Error-{e}")
                 pass
+
             msg_count += 1
             mcount += 1
-            new_skip_no=str(skip_no+msg_count)
-            print(f"Total Indexed : {msg_count} - Current SKIP_NO: {new_skip_no}")
+            new_skip_no = str(skip_no + msg_count)
+            print(f"Total Indexed: {msg_count} - Current SKIP_NO: {new_skip_no}")
+
             if mcount == 100:
                 try:
                     datetime_ist = datetime.now(IST)
                     ISTIME = datetime_ist.strftime("%I:%M:%S %p - %d %B %Y")
-                    await m.edit(text=f"Total Indexed : <code>{msg_count}</code>\nCurrent skip_no:<code>{new_skip_no}</code>\nLast edited at {ISTIME}")
-                    mcount -= 100
+                    await m.edit(
+                        text=f"Total Indexed: <code>{msg_count}</code>\nCurrent skip_no: <code>{new_skip_no}</code>\nLast edited at {ISTIME}"
+                    )
+                    mcount = 0
                 except FloodWait as e:
-                    print(f"Floodwait {e.x}")
-                    pass
+                    print(f"FloodWait: {e.x} seconds")
+                    await asyncio.sleep(e.x)
                 except Exception as e:
-                    await bot.send_message(chat_id=OWNER, text=f"LOG-Error: {e}")
+                    await client.send_message(chat_id=OWNER, text=f"LOG-Error: {e}")
                     print(e)
-                    pass
-        await m.edit(f"Succesfully Indexed <code>{msg_count}</code> messages.")
+
+        await m.edit(f"Successfully Indexed <code>{msg_count}</code> messages.")
     except Exception as e:
         print(e)
-        await m.edit(text=f"Error: {e}")
-        pass
+        await m.edit(text=f"Error: {e}")                
