@@ -216,22 +216,22 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     media = getattr(fetched_msg, file_type, None)
                     if media is not None:
                         file_type = file_type
-                        file_id = media.file_id
+                        id = media.file_id
                         break
             elif filter == "empty":
                 for file_type in ("document", "video", "audio", "photo"):
                     media = getattr(fetched_msg, file_type, None)
                     if media is not None:
                         file_type = file_type
-                        file_id = media.file_id
+                        id = media.file_id
                         break
                 else:
-                    file_id = f"{FROM}_{fetched_msg.id}"
+                    id = f"{FROM}_{fetched_msg.id}"
                     file_type = "others"
 
             message_id = fetched_msg.id
             try:
-                await save_data(file_id, channel, message_id, method, msg_caption, file_type)
+                await save_data(id, channel, message_id, method, msg_caption, file_type)
             except Exception as e:
                 print(e)
                 await client.send_message(OWNER, f"LOG-Error-{e}")
