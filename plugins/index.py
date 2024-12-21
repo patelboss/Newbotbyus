@@ -149,7 +149,6 @@ async def run(client: Client, message):
         )
 
 
-
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
     global skip_no, limit_no  # Ensure these are accessible
@@ -214,6 +213,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
     #skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     skip_no = int(skip_no) if skip_no and str(skip_no).isdigit() else 0
     limit_no = int(limit_no) if limit_no and str(limit_no).isdigit() else 100
+    print(f"Channel id : {From}, skip number: {skip_no}, limit number: {limit_no}, Filter: {filter}")
+          
 
     try:
         # Iterate through messages in the channel
