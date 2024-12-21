@@ -219,15 +219,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
     try:
         
         # Iterate through messages in the channel
-        async for MSG in bot.USER.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
+        async for MSG in client.USER.search_messages(chat_id=FROM,offset=skip_no,limit=limit_no,filter=filter):
             if channel_type == "public":
                 methord="bot"
                 channel=FROM
-                msg=await bot.get_messages(FROM, MSG.message_id)
+                msg=await client.get_messages(FROM, MSG.message_id)
             elif channel_type == "private":
                 methord="user"
                 channel=str(FROM)
-                msg=await bot.USER.get_messages(FROM, MSG.message_id)
+                msg=await client.USER.get_messages(FROM, MSG.message_id)
             msg_caption=""
             if caption is not None:
                 msg_caption=caption
@@ -256,7 +256,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 await save_data(id, channel, message_id, methord, msg_caption, file_type)
             except Exception as e:
                 print(e)
-                await bot.send_message(OWNER, f"LOG-Error-{e}")
+                await client.send_message(OWNER, f"LOG-Error-{e}")
                 pass
             msg_count += 1
             mcount += 1
