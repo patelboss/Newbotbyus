@@ -10,6 +10,9 @@ from asyncio.exceptions import TimeoutError
 from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
 from bot import Bot  # Import the bot instance correctly
 from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
+import asyncio
+import random
+
 
 # Handler to forward messages from source channels to target channels
 @Client.on_message(filters.channel)
@@ -20,16 +23,20 @@ async def forward_messages(client, message):
     for channel in channel_mappings:
         if message.chat.id == channel["source_id"]:
             try:
-                # Forward the message to the target channel
-                await client.USER.message.copy(
+                # Forward the message as the user
+                await client.USER.copy_message(
                     chat_id=channel["target_id"],
                     from_chat_id=message.chat.id,
-                    message_ids=message.id
+                    message_id=message.id
                 )
                 print(f"Forwarded message from {message.chat.id} to {channel['target_id']}")
+
+                # Add a random delay to mimic human behavior
+                wait_time = random.uniform(1, 5)  # Random delay between 1 and 5 seconds
+                await asyncio.sleep(wait_time)
+
             except Exception as e:
                 print(f"Failed to forward message: {e}")
-
 # Command to add a new channel mapping
 @Client.on_message(filters.command("addchannel") & filters.user(OWNER_ID))
 async def add_channel_command(client, message):
