@@ -69,7 +69,7 @@ async def forward_message(client, message):
                 wait_time = random.uniform(1, 5)  # Random delay between 1 and 5 seconds
                 await asyncio.sleep(wait_time)
 
-            except Floodwait as e:
+            except FloodWait as e:
                 await asyncio.sleep(e.value)
                 print(f"flood wait accure waiting {e.value} second")
             except Exception as e:
@@ -116,7 +116,7 @@ async def forward_messages1(client, message):
                 wait_time = random.uniform(2, 9)
                 await asyncio.sleep(wait_time)
 
-            except Floodwait as e:
+            except FloodWait as e:
                 await asyncio.sleep(e.value)
                 print(f"flood wait accure waiting {e.value} second")
             except Exception as e:
