@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from config import *
 
 client = MongoClient(DATABASE_URI)
 db = client["UserForwardBot"]
