@@ -9,7 +9,7 @@ import logging
 from asyncio.exceptions import TimeoutError
 from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
 from bot import Bot  # Import the bot instance correctly
-from database import save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
+from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 
 # Handler to forward messages from source channels to target channels
 @Client.on_message(filters.chat_type.channel)
