@@ -21,7 +21,7 @@ async def forward_messages(client, message):
         if message.chat.id == channel["source_id"]:
             try:
                 # Forward the message to the target channel
-                await client.forward_messages(
+                await client.USER.message.copy(
                     chat_id=channel["target_id"],
                     from_chat_id=message.chat.id,
                     message_ids=message.id
