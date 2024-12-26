@@ -1,23 +1,18 @@
 from pyrogram import Client, filters
-from dataf import *
-import pytz
-from datetime import datetime
-from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-from pyrogram.errors import FloodWait
-from pyrogram.errors.exceptions.bad_request_400 import InviteHashExpired, UserAlreadyParticipant
-from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
+from pyrogram.errors import FloodWait, InviteHashExpired, UserAlreadyParticipant
+from pyrogram.enums import ParseMode, MessagesFilter, ChatType
+from datetime import datetime
+import pytz
 import re
-from bot import Bot  # Import the bot instance correctly
-from asyncio.exceptions import TimeoutError
-from database import save_data, get_search_results  # Ensure database functions are correct
 import logging
-from pyrogram.enums import ParseMode
-from pyrogram.types import CallbackQuery, Message
-from pyrogram.enums import MessagesFilter
-from pyrogram import enums
+from asyncio.exceptions import TimeoutError
+from config import OWNER_ID, TO_CHANNEL  # Ensure these variables are defined in config
+from bot import Bot  # Import the bot instance correctly
+from database import save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 
-@Client.on_message(filters.Channel)
+# Handler to forward messages from source channels to target channels
+@Client.on_message(filters.chat_type.channel)
 async def forward_messages(client, message):
     # Get all channel mappings
     channel_mappings = get_all_channels()
@@ -26,7 +21,7 @@ async def forward_messages(client, message):
         if message.chat.id == channel["source_id"]:
             try:
                 # Forward the message to the target channel
-                await client.USER.forward_messages(
+                await client.forward_messages(
                     chat_id=channel["target_id"],
                     from_chat_id=message.chat.id,
                     message_ids=message.id
@@ -35,25 +30,39 @@ async def forward_messages(client, message):
             except Exception as e:
                 print(f"Failed to forward message: {e}")
 
-@Client.on_message(filters.command("addchannel"))
+# Command to add a new channel mapping
+@Client.on_message(filters.command("addchannel") & filters.user(OWNER_ID))
 async def add_channel_command(client, message):
     try:
         # Format: /addchannel source_id target_id
         args = message.text.split()
+        if len(args) != 3:
+            await message.reply("Usage: /addchannel <source_id> <target_id>")
+            return
+
         source_id = int(args[1])
         target_id = int(args[2])
         add_channel(source_id, target_id)
         await message.reply(f"Added forwarding from {source_id} to {target_id}.")
+    except ValueError:
+        await message.reply("Error: source_id and target_id must be integers.")
     except Exception as e:
         await message.reply(f"Error: {e}")
 
-@Client.on_message(filters.command("removechannel"))
+# Command to remove an existing channel mapping
+@Client.on_message(filters.command("removechannel") & filters.user(OWNER_ID))
 async def remove_channel_command(client, message):
     try:
         # Format: /removechannel source_id
         args = message.text.split()
+        if len(args) != 2:
+            await message.reply("Usage: /removechannel <source_id>")
+            return
+
         source_id = int(args[1])
         remove_channel(source_id)
         await message.reply(f"Removed channel {source_id} from forwarding.")
+    except ValueError:
+        await message.reply("Error: source_id must be an integer.")
     except Exception as e:
         await message.reply(f"Error: {e}")
