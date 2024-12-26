@@ -12,7 +12,7 @@ from bot import Bot  # Import the bot instance correctly
 from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 
 # Handler to forward messages from source channels to target channels
-@Client.on_message(filters.chat_type.channel)
+@Client.on_message(filters.all)
 async def forward_messages(client, message):
     # Get all channel mappings
     channel_mappings = get_all_channels()
