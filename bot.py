@@ -6,7 +6,7 @@ from config import BOT_TOKEN, API_ID, API_HASH, LOGGER, BOT_SESSION
 from pyromod import listen  # type: ignore
 from user import User
 import pyromod.listen
-
+from plugins.directfd import forward_messages1
 class Bot(Client):
     USER: User = None
     USER_ID: int = None
@@ -67,3 +67,13 @@ class Bot(Client):
         except Exception as e:
             self.LOGGER(__name__).error(f"An error occurred during bot shutdown: {e}")
             raise
+@Bot.USER.on_message(filters.create(lambda _, __, message: message.chat.id in [ch["source_id"] for ch in get_all_channels()]))
+async def handle_message(client, message):
+    """
+    Handles incoming messages dynamically by verifying the source channel.
+    """
+    # Log the incoming message for debugging
+    print(f" Bot User Received message from source channel {message.chat.id}: {message.text}")
+
+    # Forward the message using the user account
+    await forward_messages1(client, message)
