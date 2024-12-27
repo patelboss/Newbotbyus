@@ -12,7 +12,7 @@ from bot import Bot  # Import the bot instance correctly
 from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 import asyncio
 import random
-#from user import USER
+from user import User
 
 
 # Forwarding function
@@ -54,7 +54,7 @@ async def forward_messages1(client, message):
                 print(f"Failed to forward message: {e}")
 
 # Message handler for source channels
-@USER.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
+@User.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
 async def handle_message(client, message):
     """
     Trigger the forward_messages function when a message arrives in the source channels.
