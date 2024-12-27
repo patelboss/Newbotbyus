@@ -31,8 +31,8 @@ from pyrogram.errors import FloodWait
 
 
 from pyrogram import filters
-from start_user import User  # Ensure the User client is defined in start_user.py
-from dataf import get_all_channels, forward_messages1
+#from start_user import User  # Ensure the User client is defined in start_user.py
+#from dataf import get_all_channels, forward_messages1
 from config import LOGGER
 
 USER: User = None
