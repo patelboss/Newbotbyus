@@ -6,7 +6,7 @@ from config import BOT_TOKEN, API_ID, API_HASH, LOGGER, BOT_SESSION
 from pyromod import listen  # type: ignore
 from user import User
 import pyromod.listen
-from plugins.directfd import forward_messages1
+#from plugins.directfd import forward_messages1
 class Bot(Client):
     USER: User = None
     USER_ID: int = None
@@ -67,6 +67,9 @@ class Bot(Client):
         except Exception as e:
             self.LOGGER(__name__).error(f"An error occurred during bot shutdown: {e}")
             raise
+
+from dataf import *
+
 @Bot.USER.on_message(filters.create(lambda _, __, message: message.chat.id in [ch["source_id"] for ch in get_all_channels()]))
 async def handle_message(client, message):
     """
@@ -77,3 +80,41 @@ async def handle_message(client, message):
 
     # Forward the message using the user account
     await forward_messages1(client, message)
+
+async def forward_messages1(client, message):
+    """
+    Forwards a message from source channels to their mapped target channels.
+    """
+    channel_mappings = get_all_channels()
+
+    for channel in channel_mappings:
+        if message.chat.id == channel["source_id"]:
+            try:
+                target_id = None
+
+                if "target_bot_username" in channel:
+                    # Resolve bot username to get the target chat ID
+                    target_chat = await client.get_chat(channel["target_bot_username"])
+                    target_id = target_chat.id
+                elif "target_id" in channel:
+                    # Directly use the target channel ID
+                    target_id = channel["target_id"]
+
+                if target_id:
+                    await USER.copy_message(
+                        chat_id=target_id,
+                        from_chat_id=message.chat.id,
+                        message_id=message.id
+                    )
+                    print(f"Forwarded message from {message.chat.id} to {target_id}")
+
+                    # Add random delay to avoid rate limits
+                    wait_time = random.uniform(2, 9)
+                    await asyncio.sleep(wait_time)
+
+            except FloodWait as e:
+                print(f"Flood wait triggered, waiting {e.value} seconds...")
+                await asyncio.sleep(e.value)
+            except Exception as e:
+                print(f"Failed to forward message: {e}")
+                        
