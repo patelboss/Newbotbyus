@@ -67,7 +67,16 @@ async def handle_message(client, message):
     Handles incoming messages dynamically by checking if the source channel is in the database.
     """
     await forward_messages1(client, message)
+@USER.on_message(filters.create(lambda _, __, message: message.chat.id in [ch["source_id"] for ch in get_all_channels()]))
+async def handle_message(client, message):
+    """
+    Handles incoming messages dynamically by verifying the source channel.
+    """
+    # Log the incoming message for debugging
+    print(f"Received message from source channel {message.chat.id}: {message.text}")
 
+    # Forward the message using the user account
+    await forward_messages1(client, message)
 # Command to add a new channel mapping
 @Client.on_message(filters.command("addchannel") & filters.user(OWNER_ID))
 async def add_channel_command(client, message):
