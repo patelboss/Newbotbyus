@@ -16,7 +16,7 @@ from user import User
 
 from pyrogram import Client, filters
 from config import OWNER_ID  # Ensure OWNER_ID is defined in config
-from user import USER  # Import the user client instance
+ #from user import USER  # Import the user client instance
 from dataf import get_all_channels, add_channel, remove_channel  # Ensure these are properly implemented
 import asyncio
 import random
