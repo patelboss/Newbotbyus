@@ -123,7 +123,7 @@ async def forward_messages1(client, message):
                 print(f"Failed to forward message: {e}")
 
 # Message handler for source channels
-@Client.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
+@Client.USER.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
 async def handle_message(client, message):
     """
     Trigger the forward_messages function when a message arrives in the source channels.
