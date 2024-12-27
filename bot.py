@@ -7,6 +7,13 @@ from pyromod import listen  # type: ignore
 from user import User
 import pyromod.listen
 #from plugins.directfd import forward_messages1
+from pyrogram import Client
+from pyrogram.enums import ParseMode
+from config import BOT_TOKEN, API_ID, API_HASH, LOGGER, BOT_SESSION
+from user import User
+from pyromod import listen  # type: ignore
+import pyromod.listen
+
 class Bot(Client):
     USER: User = None
     USER_ID: int = None
@@ -47,11 +54,9 @@ class Bot(Client):
 
             # Log start completion
             self.LOGGER(__name__).info(f"Bot @{me.username} started successfully and is now online.")
-            
-            # Initialize User Client if required
-            self.USER, self.USER_ID = await User().start()
-            #self.LOGGER(__name__).info(f"Bot @{me.username} started successfully and is now online.")
-            
+
+            # Initialize User Client
+            await self.initialize_user_client()
 
         except Exception as e:
             self.LOGGER(__name__).error(f"An error occurred during bot startup: {e}")
@@ -62,10 +67,20 @@ class Bot(Client):
         self.LOGGER(__name__).info("Stopping the bot...")
         try:
             await super().stop()
+            if self.USER:
+                await self.USER.stop()
+                self.LOGGER(__name__).info("User client stopped successfully.")
             self.LOGGER(__name__).info("Bot has been disconnected from Telegram servers.")
             self.LOGGER(__name__).info("Bot stopped successfully. Goodbye!")
         except Exception as e:
             self.LOGGER(__name__).error(f"An error occurred during bot shutdown: {e}")
             raise
 
-
+    async def initialize_user_client(self):
+        """Initialize the User client if not already started."""
+        if self.USER:
+            self.LOGGER(__name__).info("User client is already running.")
+        else:
+            self.LOGGER(__name__).info("Starting the User client...")
+            self.USER, self.USER_ID = await User().start()
+            self.LOGGER(__name__).info(f"User client started successfully with ID: {self.USER_ID}.")
