@@ -7,8 +7,8 @@ import pytz
 import re
 import logging
 from asyncio.exceptions import TimeoutError
-from config import OWNER_ID #, TO_CHANNEL  # Ensure these variables are defined in config
-from bot import Bot  # Import the bot instance correctly
+from config import * #OWNER_ID #, TO_CHANNEL  # Ensure these variables are defined in config
+#from bot import Bot  # Import the bot instance correctly
 from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 import asyncio
 import random
@@ -22,13 +22,63 @@ import asyncio
 import random
 from pyrogram.errors import FloodWait
 
+#USER: User = None
+#USER_ID: int = None
+#await super().start()
+#self.USER, self.USER_ID = await User().start()
+# Forwarding function
+
+
+
+from pyrogram import filters
+from start_user import User  # Ensure the User client is defined in start_user.py
+from dataf import get_all_channels, forward_messages1
+from config import LOGGER
+
 USER: User = None
 USER_ID: int = None
-await super().start()
-self.USER, self.USER_ID = await User().start()
+
+async def initialize_user():
+    """
+    Initializes and starts the User client if not already running.
+    """
+    global USER, USER_ID
+    if USER:
+        LOGGER(__name__).info("User client is already running.")
+    else:
+        LOGGER(__name__).info("Starting the User client...")
+        USER, USER_ID = await User().start()
+        LOGGER(__name__).info(f"User client started successfully with ID: {USER_ID}.")
+
 # Forwarding function
 @USER.on_message(filters.create(lambda _, __, message: message.chat.id in [ch["source_id"] for ch in get_all_channels()]))
 async def handle_message(client, message):
+    """
+    Handles incoming messages dynamically by verifying the source channel.
+    """
+    LOGGER(__name__).info(f"Received message from source channel {message.chat.id}: {message.text}")
+
+    try:
+        # Forward the message using the user account
+        await forward_messages1(client, message)
+        LOGGER(__name__).info(f"Message from {message.chat.id} forwarded successfully.")
+    except FloodWait as e:
+        LOGGER(__name__).warning(f"FloodWait detected. Sleeping for {e.value} seconds.")
+        await asyncio.sleep(e.value)
+    except Exception as e:
+        LOGGER(__name__).error(f"Error during forwarding: {e}")
+
+# Ensure the User client is initialized before using
+async def ensure_user_ready():
+    """
+    Ensures that the User client is initialized before attaching handlers.
+    """
+    await initialize_user()
+    LOGGER(__name__).info("Attaching forward message handlers.")
+
+
+#@USER.on_message(filters.create(lambda _, __, message: message.chat.id in [ch["source_id"] for ch in get_all_channels()]))
+async def handle_message1(client, message):
     """
     Handles incoming messages dynamically by verifying the source channel.
     """
