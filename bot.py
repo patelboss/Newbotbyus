@@ -1,22 +1,20 @@
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 from config import BOT_TOKEN, API_ID, API_HASH, LOGGER, BOT_SESSION
-#from database import get_string_session
-#from utils import listen  # Import custom listen function
 from pyromod import listen  # type: ignore
-from user import User
-import pyromod.listen
+from user import User  # Ensure User class is implemented correctly
+
 
 class Bot(Client):
     USER: User = None
     USER_ID: int = None
 
     def __init__(self):
-        """Initialize the bot with enhanced logging for each step."""
+        """Initialize the bot with enhanced logging."""
         self.LOGGER = LOGGER
         self.LOGGER(__name__).info("Initializing the bot...")
 
-        # Log information about the session and API credentials
+        # Log session information
         if BOT_SESSION:
             self.LOGGER(__name__).info("Using the provided BOT_SESSION for the bot.")
         else:
@@ -32,38 +30,42 @@ class Bot(Client):
             plugins={"root": "plugins"},
             workers=10
         )
-        self.LOGGER(__name__).info("Bot initialization complete. Ready to start.")
+        self.LOGGER(__name__).info("Bot initialization complete.")
 
     async def start(self):
-        """Start the bot with detailed logging and necessary preparations."""
+        """Start the bot and user account client."""
         self.LOGGER(__name__).info("Starting the bot...")
         try:
+            # Start the bot client
             await super().start()
-            self.LOGGER(__name__).info("Successfully connected to Telegram servers.")
+            self.LOGGER(__name__).info("Bot client connected to Telegram servers.")
 
             # Fetch bot information
             me = await self.get_me()
-            self.LOGGER(__name__).info(f"Bot details retrieved: Username: @{me.username}, Name: {me.first_name}.")
+            self.LOGGER(__name__).info(f"Bot started as @{me.username} ({me.id}).")
 
-            # Log start completion
-            self.LOGGER(__name__).info(f"Bot @{me.username} started successfully and is now online.")
-            
-            # Initialize User Client if required
-            self.USER, self.USER_ID = await User().start()
-            #self.LOGGER(__name__).info(f"Bot @{me.username} started successfully and is now online.")
-            
+            # Start the user client
+            self.USER = await User().start()  # Ensure User is initialized before plugin actions
+            self.USER_ID = self.USER.me.id
+            self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
 
         except Exception as e:
-            self.LOGGER(__name__).error(f"An error occurred during bot startup: {e}")
+            self.LOGGER(__name__).error(f"An error occurred during startup: {e}")
             raise
 
     async def stop(self):
-        """Stop the bot with clean shutdown and detailed logging."""
+        """Stop the bot and user client with clean shutdown."""
         self.LOGGER(__name__).info("Stopping the bot...")
         try:
+            # Stop the user client if it exists
+            if self.USER:
+                await self.USER.stop()
+                self.LOGGER(__name__).info("User client disconnected.")
+
+            # Stop the bot client
             await super().stop()
             self.LOGGER(__name__).info("Bot has been disconnected from Telegram servers.")
             self.LOGGER(__name__).info("Bot stopped successfully. Goodbye!")
         except Exception as e:
-            self.LOGGER(__name__).error(f"An error occurred during bot shutdown: {e}")
+            self.LOGGER(__name__).error(f"An error occurred during shutdown: {e}")
             raise
