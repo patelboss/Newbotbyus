@@ -14,8 +14,8 @@ class Bot(Client):
         self.LOGGER = LOGGER
         self.LOGGER(__name__).info("Initializing the bot...")
         self.USER = await User().start()  # Ensure User is initialized before plugin actions
-            self.USER_ID = self.USER.me.id
-            self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
+        self.USER_ID = self.USER.me.id
+        self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
          #   setup_user_handlers(bot)
         
 
