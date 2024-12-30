@@ -13,10 +13,6 @@ class Bot(Client):
         """Initialize the bot with enhanced logging."""
         self.LOGGER = LOGGER
         self.LOGGER(__name__).info("Initializing the bot...")
-        self.USER = await User().start()  # Ensure User is initialized before plugin actions
-        self.USER_ID = self.USER.me.id
-        self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
-         #   setup_user_handlers(bot)
         
 
         # Log session information
@@ -50,9 +46,9 @@ class Bot(Client):
             self.LOGGER(__name__).info(f"Bot started as @{me.username} ({me.id}).")
 
             # Start the user client
-         #   self.USER = await User().start()  # Ensure User is initialized before plugin actions
-          #  self.USER_ID = self.USER.me.id
-          #  self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
+            self.USER = await User().start()  # Ensure User is initialized before plugin actions
+            self.USER_ID = self.USER.me.id
+            self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
          #   setup_user_handlers(bot)
 
         except Exception as e:
