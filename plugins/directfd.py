@@ -8,7 +8,7 @@ import re
 import logging
 from asyncio.exceptions import TimeoutError
 from config import OWNER_ID #, TO_CHANNEL  # Ensure these variables are defined in config
-#from bot import Bot  # Import the bot instance correctly
+from bot import Bot  # Import the bot instance correctly
 from dataf import * # save_data, get_search_results, get_all_channels, add_channel, remove_channel  # Ensure database functions are correct
 import asyncio
 import random
