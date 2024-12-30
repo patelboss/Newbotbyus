@@ -3,7 +3,7 @@ from pyrogram.enums import ParseMode
 from config import BOT_TOKEN, API_ID, API_HASH, LOGGER, BOT_SESSION
 from pyromod import listen  # type: ignore
 from user import User  # Ensure User class is implemented correctly
-from plugins.directfd import setup_user_handlers
+#from plugins.directfd import setup_user_handlers
 
 class Bot(Client):
     USER: User = None
@@ -13,6 +13,11 @@ class Bot(Client):
         """Initialize the bot with enhanced logging."""
         self.LOGGER = LOGGER
         self.LOGGER(__name__).info("Initializing the bot...")
+        self.USER = await User().start()  # Ensure User is initialized before plugin actions
+            self.USER_ID = self.USER.me.id
+            self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
+         #   setup_user_handlers(bot)
+        
 
         # Log session information
         if BOT_SESSION:
@@ -45,10 +50,10 @@ class Bot(Client):
             self.LOGGER(__name__).info(f"Bot started as @{me.username} ({me.id}).")
 
             # Start the user client
-            self.USER = await User().start()  # Ensure User is initialized before plugin actions
-            self.USER_ID = self.USER.me.id
-            self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
-            setup_user_handlers(bot)
+         #   self.USER = await User().start()  # Ensure User is initialized before plugin actions
+          #  self.USER_ID = self.USER.me.id
+          #  self.LOGGER(__name__).info(f"User client started with ID {self.USER_ID}.")
+         #   setup_user_handlers(bot)
 
         except Exception as e:
             self.LOGGER(__name__).error(f"An error occurred during startup: {e}")
