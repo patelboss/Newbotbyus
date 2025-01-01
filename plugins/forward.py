@@ -182,9 +182,12 @@ async def sleep_to_avoid_ban(bot, m):
         parse_mode=ParseMode.HTML
     )
     status.add(2)
-    status.remove(1)
+    if 1 in status:  # Check if 1 exists before removing
+        status.remove(1)
     await asyncio.sleep(csleep)
-
+    # Reset status after sleeping
+    status.add(1)
+    status.remove(2)
 def get_new_file_id(fetch, file_type):
     media = getattr(fetch, file_type, None)
     if media:
