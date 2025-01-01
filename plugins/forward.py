@@ -138,7 +138,8 @@ async def forward(bot, message):
                 await asyncio.sleep(e.value)
             except Exception as e:
                 print(f"Error: {e}")
-                await bot.send_message(chat_id=OWNER, text=f"LOG-Error: {e}", parse_mode=ParseMode.HTML)
+                await bot.send_message(chat_id=OWNER, text=f"LOG-Error:<pre> {e} </pre>", parse_mode=ParseMode.HTML)
+                await asyncio.sleep(60)
 
         if ccount <= 0:  # Reset counters to avoid bans
             await sleep_to_avoid_ban(bot, m)
