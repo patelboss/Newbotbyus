@@ -35,7 +35,7 @@ async def forward_messages1(client, message):
                     continue
 
                 # Forward message
-                await client.USER.copy_message(
+                await client.copy_message(
                     chat_id=target_id,
                     from_chat_id=message.chat.id,
                     message_id=message.id
