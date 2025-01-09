@@ -14,9 +14,6 @@ import asyncio
 import random
 
 # Dynamic handler setup
-def setup_user_handlers(bot):
-    if not Bot.USER:
-        raise ValueError("User client is not initialized!")
         
 # Forwarding function
 async def forward_messages1(client, message):
@@ -57,7 +54,7 @@ async def forward_messages1(client, message):
                 print(f"Failed to forward message: {e}")
 
 # Message handler for source channels
-@Bot.USER.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
+@Bot.user.on_message(filters.chat([channel["source_id"] for channel in get_all_channels()]))
 async def handle_message(client, message):
     """
     Trigger the forward_messages function when a message arrives in the source channels.
