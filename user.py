@@ -1,15 +1,15 @@
 from config import *
 from pyrogram import Client
-from udatabase import *
+#from udatabase import *
 
 class User(Client):
     def __init__(self):
         # Get the string session synchronously from the database
-        session1 = get_string_session()
+     #   session1 = get_string_session()
 
         # Ensure that a session was found, otherwise raise an error
-        if not session1:
-            raise ValueError("No session found in the database")
+      #  if not session1:
+       #     raise ValueError("No session found in the database")
 
         # Pass the session string directly to the Pyrogram client, bypassing session file name
         super().__init__(
