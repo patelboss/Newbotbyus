@@ -4,6 +4,8 @@ from config import OWNER_ID, TO_CHANNEL, COLLECTION_NAME, DATABASE_NAME
 import asyncio
 from pyrogram.errors import FloodWait
 import random
+from pyrogram.errors import FloodWait, PeerIdInvalid
+import asyncio
 from pyrogram.errors.exceptions.bad_request_400 import FileReferenceEmpty, FileReferenceExpired, MediaEmpty
 import pytz
 from datetime import datetime
@@ -136,13 +138,9 @@ async def forward(bot, message):
 
             except FloodWait as e:
                 await asyncio.sleep(e.value)
-            except ValueError as e:
-                if "Peer id invalid" in str(e):
-                    print(f"Ignored invalid peer ID error: {e}")
-                    await bot.send_message(chat_id=OWNER, text=f"⚠️ <b>Invalid Peer ID Detected</b>\n\n<pre>{e}</pre>")
-                else:
-                print(f"Error: {e}")
-                await bot.send_message(chat_id=OWNER, text=f"LOG-Error:<pre>{e}</pre>")
+            except PeerIdInvalid as e:
+                print(f"Ignored invalid peer ID error: {e}")
+                await bot.send_message(chat_id=OWNER, text=f"⚠️ <b>Invalid Peer ID Detected</b>\n\n<pre>{e}</pre>")
                 await asyncio.sleep(10)  # Shorter wait for this specific case
             except Exception as e:
                 print(f"Error: {e}")
