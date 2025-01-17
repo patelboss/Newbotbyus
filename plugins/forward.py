@@ -136,9 +136,17 @@ async def forward(bot, message):
 
             except FloodWait as e:
                 await asyncio.sleep(e.value)
+            except ValueError as e:
+                if "Peer id invalid" in str(e):
+                    print(f"Ignored invalid peer ID error: {e}")
+                    await bot.send_message(chat_id=OWNER, text=f"⚠️ <b>Invalid Peer ID Detected</b>\n\n<pre>{e}</pre>")
+                else:
+                print(f"Error: {e}")
+                await bot.send_message(chat_id=OWNER, text=f"LOG-Error:<pre>{e}</pre>")
+                await asyncio.sleep(10)  # Shorter wait for this specific case
             except Exception as e:
                 print(f"Error: {e}")
-                await bot.send_message(chat_id=OWNER, text=f"LOG-Error:<pre> {e} </pre>", parse_mode=ParseMode.HTML)
+                await bot.send_message(chat_id=OWNER, text=f"LOG-Error:<pre>{e}</pre>")
                 await asyncio.sleep(60)
 
         if ccount <= 0:  # Reset counters to avoid bans
