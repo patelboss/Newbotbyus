@@ -43,7 +43,7 @@ class Bot(Client):
 
             # Send a startup message to the specified channel
             await self.send_message(
-                chat_id=CHANNEL_ID,  # Replace with your channel ID
+                chat_id=TO_CHANNEL,  # Replace with your channel ID
                 text=f"✅ Bot @{me.username} has started successfully and is now online!"
             )
             self.LOGGER(__name__).info(f"Startup message sent to the channel {CHANNEL_ID}.")
