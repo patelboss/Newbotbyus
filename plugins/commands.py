@@ -5,8 +5,6 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ParseMode  # Import ParseMode for correct parse mode handling
 from config import OWNER_ID, LOGGER
-#from session_manager import generate_session  # Import session generation
-from utils import listen  # Ensure the custom listen function is imported
 from pyrogram.types import Message
 # Messages
 START_MSG = (
