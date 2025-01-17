@@ -140,6 +140,7 @@ async def forward(bot, message):
                 await asyncio.sleep(e.value)
             except PeerIdInvalid as e:
                 print(f"Ignored invalid peer ID error: {e}")
+                print(f" to channel id : {TO_CHANNEL}")
                 await bot.send_message(chat_id=OWNER, text=f"⚠️ <b>Invalid Peer ID Detected</b>\n\n<pre>{e}</pre>")
                 await asyncio.sleep(10)  # Shorter wait for this specific case
             except Exception as e:
